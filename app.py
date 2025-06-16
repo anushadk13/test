@@ -102,6 +102,34 @@ def delete_patient(patient_id):
         'data': deleted_patient
     })
 
+@app.route('/api/patients/delete', methods=['POST'])
+def delete_patients_by_request_ids():
+    """Batch delete patients by requestId list"""
+    try:
+        req_data = request.get_json()
+        request_ids = req_data.get("requestIds", [])
+        
+        if not isinstance(request_ids, list) or not request_ids:
+            return jsonify({
+                "error": "Invalid input. Expected a list of requestIds."
+            }), 400
+
+        global patient_data
+        to_delete = [p for p in patient_data if p.get("requestId") in request_ids]
+        patient_data = [p for p in patient_data if p.get("requestId") not in request_ids]
+
+        return jsonify({
+            "message": "Batch deletion complete",
+            "deletedCount": len(to_delete),
+            "deleted": to_delete
+        }), 200
+    except Exception as e:
+        return jsonify({
+            "error": "Batch deletion failed",
+            "details": str(e)
+        }), 400
+
+
 @app.route('/health', methods=['GET'])
 def health_check():
     """Health check endpoint"""
